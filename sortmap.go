@@ -4,11 +4,12 @@ import (
 	"sync"
 )
 
+// CompareFunc has 4 paramaters in two pair: `a(ka=>va)` and `b(kb=>vb)`.
 type CompareFunc func(ka, va, kb, vb interface{}) bool
 
 // SortMap illustrates how to sort a map
 type SortMap struct {
-	// By is an user-defined function to indecate how to compare two set of data `a(ka=>va)` and `b(kb=>vb)`.
+	// an user-defined comparation logical
 	by CompareFunc
 
 	// internal map, keeps data
@@ -38,6 +39,7 @@ func (sm *SortMap) Set(k interface{}, v interface{}) {
 	sm.Lock()
 	_, ok := sm.m[k]
 	sm.m[k] = v
+	// don't add the same key repeatly
 	if !ok {
 		sm.s = append(sm.s, k)
 	}
@@ -51,6 +53,7 @@ func (sm *SortMap) Delete(k interface{}) interface{} {
 	a, ok := sm.m[k]
 	if ok {
 		delete(sm.m, k)
+		// delete from the slice
 		for i, v := range sm.s {
 			if v == k {
 				sm.s = append(sm.s[:i], sm.s[i+1:]...)
@@ -87,6 +90,7 @@ func (sm *SortMap) Swap(i, j int) {
 func (sm *SortMap) Next() (v interface{}, has bool) {
 	sm.RLock()
 	defer sm.RUnlock()
+	// lock for the position indicator
 	sm.pmutex.Lock()
 	defer sm.pmutex.Unlock()
 	if sm.p+1 == len(sm.s) {
